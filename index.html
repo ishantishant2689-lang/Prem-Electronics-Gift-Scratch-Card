@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prem Electronics Scratch Card</title>
+<style>
+body{font-family:Arial,sans-serif;background:#fff7ed;text-align:center;padding:24px 14px;color:#222}
+.card{max-width:360px;margin:30px auto;background:white;border-radius:18px;padding:22px;box-shadow:0 4px 18px #0002}
+h1{color:#a34b12}
+#scratch{width:100%;height:190px;border-radius:12px;touch-action:none}
+#message{font-size:20px;font-weight:bold;margin:18px 0}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Prem Electronics</h1>
+<p>🎁 Scratch the card to reveal your gift!</p>
+<div style="position:relative">
+<div id="prize" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:bold;color:#16803d;background:#fff0c9;border-radius:12px">🎁 Electric Kettle</div>
+<canvas id="scratch" style="position:relative"></canvas>
+</div>
+<div id="message">Scratch here to reveal your gift</div>
+</div>
+<script>
+const key='prem_scratch_used_v1';
+const canvas=document.getElementById('scratch');
+const ctx=canvas.getContext('2d');
+const msg=document.getElementById('message');
+let used=localStorage.getItem(key)==='yes';
+function setup(){
+ const r=canvas.getBoundingClientRect();
+ canvas.width=r.width*devicePixelRatio;
+ canvas.height=r.height*devicePixelRatio;
+ ctx.scale(devicePixelRatio,devicePixelRatio);
+ ctx.fillStyle='#aeb5bf';ctx.fillRect(0,0,r.width,r.height);
+ ctx.fillStyle='#263548';ctx.font='bold 22px Arial';ctx.textAlign='center';
+ ctx.fillText('SCRATCH HERE',r.width/2,r.height/2);
+}
+if(used){canvas.style.display='none';msg.textContent='Sorry, this scratch card has already been used!';}
+else{
+ setup();
+ let drawing=false,started=false;
+ function scratch(e){
+  if(!drawing)return;
+  const r=canvas.getBoundingClientRect();
+  const p=e.touches?e.touches[0]:e;
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath();ctx.arc(p.clientX-r.left,p.clientY-r.top,22,0,Math.PI*2);ctx.fill();
+  if(!started){started=true;localStorage.setItem(key,'yes');msg.textContent='Keep scratching to reveal your gift!';}
+  const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  let clear=0;
+  for(let i=3;i<data.length;i+=4)if(data[i]===0)clear++;
+  if(clear>data.length/4*0.45){canvas.style.display='none';msg.textContent='🎉 Congratulations! You won an Electric Kettle!';}
+ }
+ canvas.addEventListener('pointerdown',e=>{drawing=true;canvas.setPointerCapture(e.pointerId);scratch(e)});
+ canvas.addEventListener('pointermove',scratch);
+ canvas.addEventListener('pointerup',()=>drawing=false);
+ canvas.addEventListener('pointercancel',()=>drawing=false);
+}
+</script>
+</body>
+</html>
